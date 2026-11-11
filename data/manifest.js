@@ -39,6 +39,7 @@ window.RULES = {
 
 /* ---- Year-wise paper files (loaded only when the student picks that year) ---- */
 window.PAPER_LIST = [
+  { year: 2024, file: 'data/2024.js' },
   { year: 2023, file: 'data/2023.js' },
   { year: 2022, file: 'data/2022.js' },
   { year: 2021, file: 'data/2021.js' }
