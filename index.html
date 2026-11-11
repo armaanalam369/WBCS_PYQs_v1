@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark" data-pal="violet" data-motion="on">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>WBCS Prelims Mock Test Series</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="bg"><i></i><i></i><i></i><i></i></div>
+<header><span class="logo">⚡ WBCS Prelims Mock Series</span><button class="sw" id="tgl" data-act="theme" aria-label="Dark / light mode"><i></i></button></header>
+<main id="app"></main>
+<div class="shade" id="shade" data-act="closegrid"></div>
+<div id="drawer"></div>
+<div class="shade" id="shade2" data-act="closesheet"></div>
+<div id="sheet" aria-label="Settings and analytics">
+  <div class="shead"><b style="font-size:1.1rem">⚙️ Settings &amp; Analytics</b><button class="btn g s" data-act="closesheet">✕ Close</button></div>
+  <div class="tabs" id="stabs"></div>
+  <div id="sbody"></div>
+</div>
+<input type="file" id="imp" accept=".json,application/json" style="display:none">
+<div class="fabs">
+  <button class="fab s" id="bExit" data-act="exit" style="display:none" aria-label="Exit test">✕</button>
+  <button class="fab s" id="bGrid" data-act="grid" style="display:none" aria-label="Question list">▦</button>
+  <button class="fab main" data-act="sheet" aria-label="Settings and analytics">⚙️</button>
+</div>
+
+<!-- 1) exam rules + topic list + list of year files -->
+<script src="data/manifest.js"></script>
+<!-- 2) app logic (year papers are loaded on demand from the paths in manifest.js) -->
+<script src="app.js"></script>
+</body>
+</html>
