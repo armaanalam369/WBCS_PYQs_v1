@@ -1,10 +1,10 @@
-/* Indian Polity — Set 2.   ⚠ SAMPLE DATA: replace with the real questions. */
-(window.SETDATA = window.SETDATA || {})['POL-2'] = {
-  title: 'Indian Polity · Set 2',
+/* WBCS Prelims — Indian Polity · Set 2
+   SAMPLE DATA: replace with real questions. Fields: c = sub-topic, q = question, o = options, a = index of the right option (0 = first), e = explanation. */
+(window.SETS = window.SETS || {})['polity/set-2'] = {
+  title: 'Set 2',
   questions: [
-    { c: 'Parliament', q: 'How many members can the President nominate to the Rajya Sabha?', o: ['2', '6', '12', '14'], a: 2, e: 'The President nominates 12 members with special knowledge in literature, science, art and social service.' },
-    { c: 'Judiciary', q: 'The retirement age of a Supreme Court judge is —', o: ['60 years', '62 years', '65 years', '68 years'], a: 2, e: 'Supreme Court judges retire at 65.' },
-    { c: 'Emergency', q: 'National Emergency is declared under which Article?', o: ['Article 352', 'Article 356', 'Article 360', 'Article 370'], a: 0, e: 'Article 352 deals with National Emergency.' },
-    { c: 'Constitution', q: 'The Preamble of the Indian Constitution was amended by the —', o: ['24th Amendment', '42nd Amendment', '44th Amendment', '52nd Amendment'], a: 1, e: 'The 42nd Amendment (1976) added "Socialist", "Secular" and "Integrity".' }
+    {"c":"Fundamental Rights","q":"Right to Education is guaranteed under which Article?","o":["Article 19","Article 21A","Article 32","Article 45"],"a":1,"e":"Article 21A (86th Amendment, 2002) makes education a fundamental right for ages 6–14."},
+    {"c":"Constitution","q":"The Constitution of India came into force on —","o":["15 Aug 1947","26 Nov 1949","26 Jan 1950","2 Oct 1950"],"a":2,"e":"It came into force on 26 January 1950."},
+    {"c":"Parliament","q":"Who presides over a joint sitting of Parliament?","o":["President","Vice-President","Speaker of Lok Sabha","Prime Minister"],"a":2,"e":"The Speaker of Lok Sabha presides over a joint sitting."}
   ]
 };
