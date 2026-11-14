@@ -250,3 +250,92 @@ h2::before{content:"";width:18px;height:3px;border-radius:3px;background:linear-
 /* ===== logo + horizontal floating buttons ===== */
 .brand img.mk{width:44px;height:44px;border-radius:50%;object-fit:cover;background:none;box-shadow:0 4px 16px -4px var(--b)}
 .fabs{flex-direction:row;align-items:center;justify-content:flex-end;gap:10px}
+
+/* ===================== v5 · SUBJECT LIBRARY REDESIGN =====================
+   Idea: an exam answer sheet. Cool paper, cobalt pen ink, pencil-yellow, and
+   OMR bubbles that fill in as you finish sets. */
+[data-theme=light]{--bg:#e9edf6;--bg2:#f8f9fd;--card:#fff;--tx:#10152b;--mu:#5a6282;--bd:#d3d9ea;--gl:#10152b08;--on:#fff}
+[data-theme=dark]{--bg:#0a0e1f;--bg2:#0f1428;--card:#151b38;--tx:#edf0ff;--mu:#939bc0;--bd:#262e58;--gl:#ffffff0a;--on:#0a0e1f}
+[data-theme=light][data-pal=violet]{--a:#2f43e0;--b:#ffc21a}
+[data-theme=light][data-pal=ocean]{--a:#0a7ea4;--b:#ffc21a}
+[data-theme=light][data-pal=sunset]{--a:#d4501a;--b:#ffc21a}
+[data-theme=light][data-pal=forest]{--a:#12845a;--b:#ffc21a}
+[data-theme=light][data-pal=rose]{--a:#cf2f58;--b:#ffc21a}
+[data-theme=dark][data-pal=violet]{--a:#8fa0ff;--b:#ffc21a}
+[data-theme=dark][data-pal=ocean]{--a:#4fc3e0;--b:#ffc21a}
+[data-theme=dark][data-pal=sunset]{--a:#ff9a5c;--b:#ffc21a}
+[data-theme=dark][data-pal=forest]{--a:#4fd6a0;--b:#ffc21a}
+[data-theme=dark][data-pal=rose]{--a:#ff7a9a;--b:#ffc21a}
+
+*{font-family:"Hanken Grotesk",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+h1,h2,.sn b,.set .si b,.seg b,.brand b,.mock b,.mixcta b{font-family:"Bricolage Grotesque","Hanken Grotesk",system-ui,sans-serif}
+body{background:var(--bg);letter-spacing:0}
+.bg{display:none}
+header{background:var(--bg2);backdrop-filter:none;-webkit-backdrop-filter:none}
+.brand img.mk{width:40px;height:40px;box-shadow:none}
+main{max-width:640px;padding:18px 16px 130px}
+h1{font-size:2.05rem;line-height:1.08;letter-spacing:-.025em;font-weight:800}
+h1.ph{font-size:1.6rem;letter-spacing:-.02em}
+h2{font-size:1.05rem;color:var(--tx);font-weight:800;letter-spacing:-.01em;margin:24px 0 10px}
+h2::before{display:none}
+.hero{padding:6px 0 14px}.hero p{max-width:44ch}
+.sec{text-transform:none;letter-spacing:0;font-size:.9rem;color:var(--tx)}
+
+/* flat, solid controls */
+.btn,.chip.on,.fab.main,.opt.sel{background:var(--a);color:var(--on);box-shadow:none}
+.btn.g{background:var(--card);color:var(--tx)}
+.chip.on{border-color:var(--a)}
+.bar i,.dots i.on{background:var(--a)}
+.stat b,.big{background:none;color:var(--tx);-webkit-text-fill-color:currentColor}
+.card{border-radius:16px;box-shadow:none}
+.card.quote{background:var(--card)}
+.res{background:var(--card)}
+.tgrid .chip.on .cn,.chip.on .cn{background:#0000002e;color:inherit}
+.sw.on,[data-theme=light] #tgl{background:var(--a)}
+
+/* segmented mode switch */
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:14px 0 10px}
+.seg button{text-align:left;padding:12px 14px;border:1.5px solid var(--bd);border-radius:14px;background:var(--card)}
+.seg button.on{border-color:var(--a);background:color-mix(in srgb,var(--a) 11%,var(--card))}
+.seg b{display:block;font-size:.98rem}.seg small{display:block;color:var(--mu);font-size:.74rem;margin-top:2px;line-height:1.3}
+
+/* full mock banner */
+.mock{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px;border:1.5px dashed var(--a);border-radius:14px;margin-bottom:4px}
+.mock b{display:block}.mock small{display:block;color:var(--mu);font-size:.78rem;margin-top:2px;line-height:1.35}
+
+/* subject index rows */
+.srow{display:grid;grid-template-columns:44px 1fr auto;grid-template-areas:"ic sn ac" "ic bbs bbs";column-gap:12px;row-gap:7px;align-items:center;width:100%;text-align:left;padding:12px 14px;margin-bottom:8px;background:var(--card);border:1px solid var(--bd);border-left:5px solid hsl(var(--h) 62% 52%);border-radius:14px}
+.srow:active{background:var(--gl)}
+.srow .ic{grid-area:ic;width:44px;height:44px;border-radius:12px;display:grid;place-items:center;font-size:1.4rem;background:hsl(var(--h) 80% 55% / .16)}
+.sn{grid-area:sn;min-width:0}.sn b{display:block;font-size:1rem;line-height:1.2}
+.sn small{display:block;color:var(--mu);font-size:.76rem;margin-top:2px}
+.ac{grid-area:ac;font-style:normal;font-weight:800;font-size:.95rem;color:var(--mu)}
+.bbs{grid-area:bbs;display:flex;flex-wrap:wrap;gap:5px;align-items:center}
+.bb{width:13px;height:13px;border-radius:50%;border:2px solid var(--mu);opacity:.55;display:inline-block}
+.bb.f{opacity:1}
+
+/* custom mix link */
+.mixcta{display:block;width:100%;text-align:left;margin-top:6px;padding:14px;border:1.5px solid var(--bd);border-radius:14px;background:var(--gl)}
+.mixcta b{display:block}.mixcta small{display:block;color:var(--mu);font-size:.78rem;margin-top:2px}
+.quote{margin-top:18px}
+
+/* subject page */
+.shd{display:flex;gap:14px;align-items:center;margin:16px 0 4px}
+.sic{width:60px;height:60px;border-radius:16px;display:grid;place-items:center;font-size:2rem;flex:none;background:hsl(var(--h) 80% 55% / .18)}
+.shd p{margin-top:4px}
+.set{display:flex;align-items:center;gap:14px;width:100%;text-align:left;padding:12px 14px;margin-bottom:8px;background:var(--card);border:1px solid var(--bd);border-radius:14px}
+.set:disabled{opacity:.6}.set.off{opacity:.5;border-style:dashed}
+.set:active:not(:disabled){background:var(--gl)}
+.no{width:42px;height:42px;border-radius:50%;border:2.5px solid var(--mu);display:grid;place-items:center;font-weight:800;flex:none;color:var(--mu)}
+.no.f{color:#fff}
+.si{flex:1;min-width:0}.si b{display:block;font-size:1rem}
+.si small{display:block;color:var(--mu);font-size:.78rem;margin-top:2px}
+.go{font-weight:800;font-size:.85rem;color:var(--a)}
+
+/* bottom navigation (only on library screens) */
+#nav{display:none;position:fixed;left:0;right:0;bottom:0;z-index:25;max-width:640px;margin:0 auto;padding:6px 6px calc(6px + env(safe-area-inset-bottom));background:var(--bg2);border-top:1px solid var(--bd)}
+body[data-v=home] #nav,body[data-v=subject] #nav,body[data-v=mix] #nav{display:grid;grid-template-columns:repeat(5,1fr)}
+#nav button{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 2px;border:0;background:none;color:var(--mu);font-size:.7rem;font-weight:700;border-radius:12px}
+#nav button i{font-style:normal;font-size:1.25rem}
+#nav button.on{color:var(--a)}
+body:not([data-v=test]) .fabs{display:none}

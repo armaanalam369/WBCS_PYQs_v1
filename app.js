@@ -1,38 +1,26 @@
 /* =====================================================================
-   WBCS Prelims PYQs Series — app.js  (v3 · chapter-wise sets)
-   Needs: data/manifest.js  (window.RULES — exam rules + 18 chapters, each with its list of sets)
-          data/<set>.js     (window.SETDATA[setId]) — loaded on demand
+   WBCS Prelims PYQs Series — app.js  (v3 · subject library)
+   Needs: data/manifest.js  (window.RULES, window.QUOTES)
+          data/<subject>/set-N.js  (window.SETS[id]) — loaded on demand
    ===================================================================== */
 (function () {
 'use strict';
 var $ = function (s) { return document.querySelector(s); };
-window.SETDATA = window.SETDATA || {};
+window.PAPERS = window.PAPERS || {};
 
 /* ---------- config (falls back to a tiny demo if manifest.js is missing) ---------- */
 var R = window.RULES, demo = !(R && R.topics && R.topics.length);
 if (demo) {
-  R = { examName: 'WBCS Prelims', negative: 0.25, minsPerQ: 1.2, topics: [
-    { n: 'English', i: '🔤', k: 'ENG', sets: [{ id: 'DEMO-ENG-1', name: 'Set 1' }] },
-    { n: 'Indian Polity', i: '🏛️', k: 'POL', sets: [{ id: 'DEMO-POL-1', name: 'Set 1' }] },
-    { n: 'General Mental Ability', i: '🧠', k: 'GMA', sets: [{ id: 'DEMO-GMA-1', name: 'Set 1' }] }] };
-  window.SETDATA['DEMO-ENG-1'] = { questions: [{ c: 'Synonyms', q: 'Synonym of "RAPID"?', o: ['Slow', 'Quick', 'Late', 'Weak'], a: 1, e: 'Rapid means quick.' }] };
-  window.SETDATA['DEMO-POL-1'] = { questions: [{ c: 'Constitution', q: 'Who chaired the Drafting Committee of the Constituent Assembly?', o: ['Nehru', 'Gandhi', 'B. R. Ambedkar', 'Patel'], a: 2, e: 'Dr B. R. Ambedkar chaired the Drafting Committee.' }] };
-  window.SETDATA['DEMO-GMA-1'] = { questions: [{ c: 'Number Series', q: 'Next term: 2, 6, 12, 20, ?', o: ['28', '30', '32', '36'], a: 1, e: 'Differences are 4, 6, 8, 10 → 30.' }] };
+  R = { examName: 'WBCS Prelims', fullMinutes: 120, negative: 0.25, topics: [
+    { n: 'English', i: '🔤', k: 'ENG', slug: 'english', sets: 1 }, { n: 'Indian Polity', i: '🏛️', k: 'POL', slug: 'polity', sets: 1 }, { n: 'General Mental Ability', i: '🧠', k: 'GMA', slug: 'mental-ability', sets: 1 }] };
+  window.SETS = {
+    'english/set-1': { title: 'Set 1', questions: [{ c: 'Synonyms', q: 'Synonym of "RAPID"?', o: ['Slow', 'Quick', 'Late', 'Weak'], a: 1, e: 'Rapid means quick.' }] },
+    'polity/set-1': { title: 'Set 1', questions: [{ c: 'Constitution', q: 'Who chaired the Drafting Committee of the Constituent Assembly?', o: ['Nehru', 'Gandhi', 'B. R. Ambedkar', 'Patel'], a: 2, e: 'Dr B. R. Ambedkar chaired the Drafting Committee.' }] },
+    'mental-ability/set-1': { title: 'Set 1', questions: [{ c: 'Number Series', q: 'Next term: 2, 6, 12, 20, ?', o: ['28', '30', '32', '36'], a: 1, e: 'Differences are 4, 6, 8, 10 → 30.' }] } };
 }
-var MPQ = R.minsPerQ || 1.2;   /* exam minutes allotted per question in a single-set test */
-var TOPICS = [], ICON = {}, CODE = {}, SETS = [], SETBY = {}, TSETS = {};
-R.topics.forEach(function (t, ti_) {
-  TOPICS.push(t.n); ICON[t.n] = t.i; CODE[t.n] = t.k || t.n.slice(0, 3).toUpperCase(); TSETS[t.n] = [];
-  /* t.sets is either a NUMBER (auto: data/<dir>/set-1.js … set-N.js) or a list of {name, file, n} for custom names */
-  var dir = t.dir || ('chapter-' + (ti_ + 1)), list = t.sets || [];
-  if (typeof list === 'number') { var cnt = list; list = []; for (var j = 0; j < cnt; j++) list.push({}); }
-  list.forEach(function (s, i) {
-    var num = i + 1, f = s.file === undefined ? 'set-' + num + '.js' : s.file;
-    if (f && f.indexOf('/') < 0 && t.dir) f = 'data/' + dir + '/' + f;
-    var o = { id: s.id || (dir + '-' + num), topic: t.n, name: s.name || ('Set ' + num), file: f, n: s.n };
-    SETS.push(o); SETBY[o.id] = o; TSETS[t.n].push(o);
-  });
-});
+R.mockQuestions = R.mockQuestions || 100; R.secPerQ = R.secPerQ || 72;
+var TOPICS = R.topics.map(function (t) { return t.n; }), ICON = {}, CODE = {};
+R.topics.forEach(function (t) { ICON[t.n] = t.i; CODE[t.n] = t.k || t.n.slice(0, 3).toUpperCase(); });
 var QUOTES = (window.QUOTES && window.QUOTES.length) ? window.QUOTES : ['Small steps every day beat big plans someday.'];
 var ti = function (s) { var i = TOPICS.indexOf(s); return i < 0 ? 999 : i; };
 var app = $('#app'), root = document.documentElement;
@@ -43,7 +31,7 @@ function put(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (
 function get(k, d) { try { var v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } }
 function del(k) { try { localStorage.removeItem(k); } catch (e) {} }
 var SET = Object.assign({ font: 1, motion: true, showTimer: true, autoNext: false, shuffleQ: false, shuffleO: false,
-  confirmSubmit: true, autoWrong: true, haptic: true, wake: false, defMins: 30, defNeg: true, tools: true, fullscreen: false }, get('wb_set', {}));
+  confirmSubmit: true, autoWrong: true, haptic: true, wake: false, defMins: 30, defNeg: true, tools: true, fullscreen: true }, get('wb_set', {}));
 var ATT = get('wb_att', []), SAV = get('wb_sav', {}), DAYM = get('wb_days', {});
 root.dataset.theme = get('wb_t', 'dark'); root.dataset.pal = get('wb_p', 'violet');
 var pad = function (n) { return String(n).padStart(2, '0'); };
@@ -53,8 +41,7 @@ if (!Object.keys(DAYM).length && ATT.length) {   /* seed the heatmap from older 
   ATT.forEach(function (a) { var k = dkey(new Date(a.ts)), n = 0; Object.keys(a.secs).forEach(function (t) { n += a.secs[t].c + a.secs[t].w; }); var x = DAYM[k] || (DAYM[k] = { q: 0, t: 0 }); x.q += n; x.t++; });
   put('wb_days', DAYM);
 }
-var SEEN = get('wb_seen', {}), LOADED = !SETS.some(function (s) { return s.n === undefined && !window.SETDATA[s.id]; });
-var S = { kind: 'test', run: 'test', el: 0, view: 'home', mode: 'set', topic: '', setId: '', pool: 'all', secs: {}, neg: SET.defNeg, tneg: true, mins: SET.defMins, cnt: 20,
+var S = { kind: 'test', run: 'test', el: 0, view: 'home', mode: 'mix', setId: '', subj: '', pool: 'all', secs: {}, neg: SET.defNeg, tneg: true, mins: SET.defMins, cnt: 20,
   qs: [], ans: [], qt: [], mk: {}, fl: [], cur: 0, left: 0, total: 0, t: null, grid: false, tab: 'last', sf: 'all', wl: null, src: '',
   paused: false, fs: false, fsx: 0, tabx: 0, tabNote: false };
 TOPICS.forEach(function (t) { S.secs[t] = false; });
@@ -71,7 +58,7 @@ var esc = function (s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '
 function bar(p) { return '<div class="bar"><i style="width:' + p + '%;background:' + tone(p) + '"></i></div>'; }
 function render(h, keep) {
   var y = window.scrollY;
-  app.innerHTML = h;
+  document.body.dataset.v = S.view; app.innerHTML = h;
   if (keep) { window.scrollTo(0, y); return; }
   app.classList.remove('in'); void app.offsetWidth; app.classList.add('in'); window.scrollTo(0, 0);
 }
@@ -113,20 +100,20 @@ function bestStreak() {
 /* ---------- in-progress test: autosave / resume ---------- */
 function saveRun() {
   if (S.view !== 'test') return;
-  put('wb_run', { run: S.run, mode: S.mode, sid: S.setId, tneg: S.tneg, src: S.src, ans: S.ans, qt: S.qt, mk: S.mk, fl: S.fl, cur: S.cur, left: S.left, total: S.total, el: S.el, fsx: S.fsx, tabx: S.tabx });
+  put('wb_run', { run: S.run, mode: S.mode, tneg: S.tneg, src: S.src, ans: S.ans, qt: S.qt, mk: S.mk, fl: S.fl, cur: S.cur, left: S.left, total: S.total, el: S.el, fsx: S.fsx, tabx: S.tabx });
 }
 function clearRun() { del('wb_run'); del('wb_run_q'); }
 function resume() {
   var r = get('wb_run', null), q = get('wb_run_q', null); if (!r || !q) return;
-  Object.assign(S, { run: r.run, mode: r.mode, setId: r.sid || S.setId, tneg: r.tneg, src: r.src, qs: q, ans: r.ans, qt: r.qt, mk: r.mk, fl: r.fl || q.map(function () { return null; }),
+  Object.assign(S, { run: r.run, mode: r.mode, tneg: r.tneg, src: r.src, qs: q, ans: r.ans, qt: r.qt, mk: r.mk, fl: r.fl || q.map(function () { return null; }),
     cur: r.cur, left: r.left, total: r.total, el: r.el, fsx: r.fsx || 0, tabx: r.tabx || 0, paused: false });
   clearInterval(S.t); S.t = setInterval(tick, 1000); getWake(); reqFS(S.run, S.mode); fabs(true); test();
 }
 
-/* ---------- full-screen exam mode (single-set exam tests only) ---------- */
+/* ---------- full-screen exam mode (full test only) ---------- */
 function reqFS(kind, mode) {
   var el = document.documentElement;
-  if (kind === 'test' && mode === 'set' && SET.fullscreen && el.requestFullscreen) { S.fs = true; el.requestFullscreen().catch(function () { S.fs = false; }); }
+  if (kind === 'test' && mode === 'full' && SET.fullscreen && el.requestFullscreen) { S.fs = true; el.requestFullscreen().catch(function () { S.fs = false; }); }
   else S.fs = false;
 }
 function exitFS() { S.fs = false; if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(function () {}); }
@@ -135,7 +122,7 @@ document.addEventListener('fullscreenchange', function () {
   if (S.fs && S.view === 'test' && !S.paused) { S.fsx++; saveRun(); $('#warn').classList.add('show'); }
 });
 document.addEventListener('visibilitychange', function () {
-  if (document.hidden) { if (S.view === 'test' && S.run === 'test' && S.mode === 'set' && !S.paused) { S.tabx++; S.tabNote = true; saveRun(); } }
+  if (document.hidden) { if (S.view === 'test' && S.run === 'test' && S.mode === 'full' && !S.paused) { S.tabx++; S.tabNote = true; saveRun(); } }
   else if (S.tabNote) { S.tabNote = false; toast('⚠️ Tab switch recorded (' + S.tabx + ')'); }
 });
 
@@ -150,48 +137,6 @@ function unpause() {
   if (S.fs && !document.fullscreenElement) reqFS(S.run, S.mode);
 }
 
-/* ---------- sets: counts, loading, "unseen" tracking ---------- */
-var avail = function (s) { return s && !s.bad && s.n !== undefined ? s.n : 0; };
-function seenMap() { var m = {}; Object.keys(SEEN).forEach(function (k) { var id = k.slice(0, k.lastIndexOf('#')); m[id] = (m[id] || 0) + 1; }); return m; }
-function counts(unseen) {
-  var c = {}, sm = unseen ? seenMap() : {}; TOPICS.forEach(function (t) { c[t] = 0; });
-  SETS.forEach(function (s) { c[s.topic] += Math.max(0, avail(s) - (sm[s.id] || 0)); });
-  return c;
-}
-var sumC = function (c, only) { return Object.keys(c).reduce(function (n, k) { return n + (!only || only[k] ? c[k] : 0); }, 0); };
-function firstSet(t) { return TSETS[t].filter(function (s) { return s.n === undefined ? !s.bad : avail(s) > 0; })[0]; }
-function fixSel() {
-  if (!TOPICS.length) return;
-  if (!S.topic || (LOADED && !firstSet(S.topic))) { S.topic = TOPICS.filter(function (t) { return firstSet(t); })[0] || S.topic || TOPICS[0]; }
-  var s = SETBY[S.setId];
-  if (s && s.topic === S.topic && (!LOADED || avail(s) > 0)) return;
-  var f = firstSet(S.topic); S.setId = f ? f.id : '';
-}
-function bestOf(id) {
-  var b = null; ATT.forEach(function (a) { if (a.sid === id) { var p = Math.max(0, Math.round(a.sc / a.max * 100)); if (b === null || p > b) b = p; } }); return b;
-}
-function load(s) {
-  if (s._p) return s._p;
-  s._p = new Promise(function (res, rej) {
-    function ok(d) { d.questions.forEach(function (q) { q.s = s.topic; }); s.n = d.questions.length; res(d); }
-    var d = window.SETDATA[s.id]; if (d && d.questions) return ok(d);
-    if (!s.file) return rej();
-    var el = document.createElement('script'); el.src = s.file;
-    el.onload = function () { var d2 = window.SETDATA[s.id]; d2 && d2.questions ? ok(d2) : rej(); };
-    el.onerror = function () { el.remove(); rej(); };
-    document.body.appendChild(el);
-  });
-  s._p.catch(function () { delete s._p; });
-  return s._p;
-}
-function preload() {   /* only sets without an "n" in the manifest need loading just to be counted */
-  var todo = SETS.filter(function (s) { return s.n === undefined; });
-  if (!todo.length) { LOADED = true; fixSel(); if (S.view === 'home') home(true); return; }
-  Promise.all(todo.map(function (s) { return load(s).catch(function () { s.bad = true; s.n = 0; }); })).then(function () {
-    LOADED = true; fixSel(); if (S.view === 'home') home(true);
-  });
-}
-
 /* ---------- home ---------- */
 function quoteCard() { return '<div class="card quote"><span class="mu">💬 Today\'s motivation</span><p>' + esc(QUOTES[Math.floor(today0() / DAY) % QUOTES.length]) + '</p></div>'; }
 function coachInfo() {
@@ -201,7 +146,6 @@ function coachInfo() {
 }
 function homeCards() {
   var h = '', run = get('wb_run', null), s = streak();
-  h += quoteCard();
   h += '<div class="row" style="margin:-4px 0 12px"><span class="pill">🔥 ' + s + '-day streak</span><span class="pill">📝 ' + ATT.length + ' tests</span></div>';
   if (run && get('wb_run_q', null)) {
     var done = run.ans.filter(function (x) { return x !== null; }).length;
@@ -214,93 +158,154 @@ function homeCards() {
            : '<div class="card"><b>🎯 Weak-area coach</b><p class="mu" style="margin-top:4px">Take a few tests and I\'ll pick the topic that needs you most.</p></div>';
   return h;
 }
-function home(keepScroll) {
-  if (S.mode === 'saved') S.mode = 'set';
-  fixSel();
-  S.view = 'home'; clearInterval(S.t); relWake(); fabs(false); closeGrid(); closeTools();
-  var q = S.kind === 'quiz', one = S.mode === 'set', un = !one && S.pool === 'unseen';
-  var cAll = counts(false), cSel = counts(un), nTotal = sumC(cAll);
-  var nCovered = TOPICS.filter(function (t) { return cAll[t] > 0; }).length, nSets = SETS.filter(function (s) { return avail(s) > 0; }).length;
-  var stats = '<div class="stats" style="grid-template-columns:repeat(3,1fr)">' +
-    stat('Chapters', LOADED ? nCovered + '/' + TOPICS.length : '…') + stat('Sets', LOADED ? nSets : '…') + stat('Questions', LOADED ? nTotal : '…') + '</div>';
-  var common = '<div class="line"><span>Rough pad &amp; calculator<small>Show ✏️ and 🧮 buttons during the test</small></span>' + sw(SET.tools, 'tg', 'tools') + '</div>' +
-    (!q && one ? '<div class="line"><span>Full-screen exam mode<small>Warns if you leave full-screen or switch tabs</small></span>' + sw(SET.fullscreen, 'tg', 'fullscreen') + '</div>' : '');
-  var body = '', nStart = 0;
-  if (one) {
-    var cur = SETBY[S.setId], sl = TSETS[S.topic].filter(function (s) { return !LOADED || avail(s) > 0; });
-    var chap = '<div class="tgrid">' + TOPICS.map(function (t) {
-      var ns = TSETS[t].filter(function (s) { return !LOADED || avail(s) > 0; }).length;
-      return '<button class="chip ' + (S.topic === t ? 'on' : '') + '" ' + (LOADED && !ns ? 'disabled' : '') + ' data-act="topic" data-v="' + esc(t) + '">' + ICON[t] + ' ' + esc(t) + ' <span class="cn">' + ns + '</span></button>';
-    }).join('') + '</div><p class="mu" style="margin-top:8px">The number on each chapter is how many sets it has.</p>';
-    var list = sl.length ? sl.map(function (s) {
-      var b = bestOf(s.id);
-      return '<button class="opt ' + (S.setId === s.id ? 'sel' : '') + '" data-act="pset" data-v="' + esc(s.id) + '">' + esc(s.name) + '<span style="float:right;opacity:.8;font-size:.82rem">' + (s.n !== undefined ? s.n + ' Qs' : '…') + (b === null ? ' · new' : ' · best ' + b + '%') + '</span></button>';
-    }).join('') : '<p class="mu">' + (LOADED ? 'No sets uploaded for this chapter yet.' : 'Loading sets…') + '</p>';
-    var info = cur && avail(cur) ? '<p class="mu" style="margin-top:12px">' + (q ? 'Quiz — no timer, answers shown instantly.' : 'Exam time: <b style="color:var(--tx)">' + Math.ceil(avail(cur) * MPQ) + ' min</b> · negative marking ' + R.negative.toFixed(2) + ' per wrong answer.') + '</p>' : '';
-    nStart = avail(cur);
-    body = '<h2>3 · Chapter</h2><div class="card">' + chap + '</div><h2>4 · Set</h2><div class="card">' + (q ? '<b>Instant-feedback quiz</b><p class="mu" style="margin:4px 0 0">See the right answer and explanation right after each question.</p>' : '') + list + info + '<div style="height:6px"></div>' + common + '</div>';
-  } else {
-    var sel = TOPICS.filter(function (t) { return S.secs[t]; }), selSet = {}; sel.forEach(function (t) { selSet[t] = 1; });
-    var nav = sumC(cSel, selSet), g = agg();
-    nStart = Math.min(S.cnt || 1e9, nav);
-    var card = '';
-    if (q) card += '<b>Instant-feedback quiz</b><p class="mu" style="margin:4px 0 8px">See the right answer and explanation right after each question. No timer.</p>';
-    card += '<div class="line" style="padding-top:0"><b>Choose chapters</b><span class="row"><button class="btn g s" data-act="topall">All</button><button class="btn g s" data-act="topweak">🎯 Weakest 3</button><button class="btn g s" data-act="topnone">None</button></span></div>' +
-      '<p class="mu"><b style="color:var(--tx)">' + sel.length + '</b> of ' + TOPICS.length + ' chapters · <b style="color:var(--tx)">' + (LOADED ? nav : '…') + '</b> questions available (all sets of the chosen chapters are mixed)</p><div class="tgrid">' +
-      TOPICS.map(function (t) {
-        var n = cSel[t], gp = g[t] && g[t].t ? pct(g[t].c, g[t].t) : null;
-        return '<button class="chip ' + (S.secs[t] ? 'on' : '') + '" ' + (LOADED && !n && !S.secs[t] ? 'disabled' : '') + ' data-act="sec" data-v="' + esc(t) + '">' + ICON[t] + ' ' + esc(t) + ' <span class="cn">' + (LOADED ? n : '…') + '</span>' + (gp === null ? '' : '<i class="mdot" style="background:' + tone(gp) + '" title="Your accuracy: ' + gp + '%"></i>') + '</button>';
-      }).join('') + '</div><p class="mu" style="margin-top:8px"><i class="mdot" style="background:#10b981"></i> strong <i class="mdot" style="background:#f59e0b"></i> average <i class="mdot" style="background:#ef4444"></i> weak — based on your past tests</p>' +
-      '<div class="line"><span>Question pool</span><span class="row"><button class="chip ' + (!un ? 'on' : '') + '" style="padding:6px 12px" data-act="pool" data-v="all">All</button><button class="chip ' + (un ? 'on' : '') + '" style="padding:6px 12px" data-act="pool" data-v="unseen">🆕 Unseen only</button></span></div>' +
-      '<div class="line"><span>Number of questions</span><span class="row">' + [10, 20, 30, 0].map(function (c) { return '<button class="chip ' + (S.cnt === c ? 'on' : '') + '" style="padding:6px 12px" data-act="cnt" data-v="' + c + '">' + (c || 'All' + (LOADED ? ' (' + nav + ')' : '')) + '</button>'; }).join('') + '</span></div>' +
-      '<div class="line"><span>Negative marking</span>' + sw(S.neg, 'neg') + '</div>' +
-      (!q ? '<div class="line"><span>Time (minutes)</span><input type="number" id="mins" min="1" max="180" value="' + S.mins + '"></div>' : '') + common;
-    body = '<h2>3 · Chapters &amp; options</h2><div class="card">' + card + '</div>';
-  }
-  render('<section class="hero"><h1>Master the Real PYQs of West Bengal Civil Services (WBCS)</h1><p class="mu">Practise authentic WBCS Prelims questions chapter by chapter, in timed sets or instant quizzes, with performance insights.</p></section>' + stats + homeCards() +
-    '<h2>1 · Mode</h2><div class="chips"><button class="chip ' + (!q ? 'on' : '') + '" data-act="kind" data-v="test">📝 Exam Test</button><button class="chip ' + (q ? 'on' : '') + '" data-act="kind" data-v="quiz">💡 Quiz (instant answers)</button></div>' +
-    '<h2>2 · Scope</h2><div class="chips"><button class="chip ' + (one ? 'on' : '') + '" data-act="mode" data-v="set">One chapter set</button><button class="chip ' + (!one ? 'on' : '') + '" data-act="mode" data-v="multi">Multi-chapter practice</button></div>' +
-    body +
-    '<button class="btn" data-act="start" style="width:100%;padding:16px;margin-top:14px">' + (q ? 'Start Quiz' : 'Start Test') + (LOADED && nStart ? ' · ' + nStart + ' questions' : '') + ' →</button>' +
-    (demo ? '<p class="note">Demo mode: <b>data/manifest.js</b> was not found, so a built-in sample is shown. Keep index.html next to the data folder to use your own sets.</p>' : ''),
-    keepScroll);
+/* ---------- subject → set data layer ---------- */
+var SEEN = get('wb_seen', {}), FAILED = {}, BYN = {}, SETBY = {}, LOADED = false;
+window.SETS = window.SETS || {};
+R.topics.forEach(function (t, ix) {
+  t.slug = t.slug || t.n.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  t.hue = ix * 20; t.list = [];
+  var src = Array.isArray(t.sets) ? t.sets : Array.apply(null, Array(+t.sets || 1)).map(function (_, i) { return i + 1; });
+  src.forEach(function (s, i) {
+    var o = (s && typeof s === 'object') ? s : { n: s }, n = o.n || i + 1;
+    var p = { id: t.slug + '/set-' + n, n: n, title: o.title || 'Set ' + n, file: o.file || 'data/' + t.slug + '/set-' + n + '.js', subj: t.n };
+    t.list.push(p); SETBY[p.id] = p;
+  });
+  BYN[t.n] = t;
+});
+var setQs = function (p) { var d = window.SETS[p.id]; return d && d.questions ? d.questions : null; };
+function load(p) {
+  return new Promise(function (res, rej) {
+    if (setQs(p)) return res(window.SETS[p.id]);
+    if (FAILED[p.id]) return rej();
+    var s = document.createElement('script'); s.src = p.file;
+    s.onload = function () { if (setQs(p)) res(window.SETS[p.id]); else { FAILED[p.id] = 1; rej(); } };
+    s.onerror = function () { FAILED[p.id] = 1; rej(); };
+    document.body.appendChild(s);
+  });
 }
-document.addEventListener('change', function (e) { if (e.target.id === 'ysel') { home(true); } });
+function loadMany(list) { return Promise.all(list.map(function (p) { return load(p).then(function () { return 1; }, function () { return 0; }); })); }
+function allSets() { return R.topics.reduce(function (a, t) { return a.concat(t.list); }, []); }
+var mkq = function (p, q, i) { return Object.assign({}, q, { s: p.subj, _k: p.id + '#' + i, _src: p.subj + ' · ' + p.title }); };
+var setMins = function (n) { return Math.max(1, Math.round(n * R.secPerQ / 60)); };
+function cmap(unseen) {
+  var c = {}; TOPICS.forEach(function (t) { c[t] = 0; });
+  allSets().forEach(function (p) { var q = setQs(p); if (q) q.forEach(function (_, i) { if (!(unseen && SEEN[p.id + '#' + i])) c[p.subj]++; }); });
+  return c;
+}
+function setStat(p) {
+  var best = null; ATT.forEach(function (a) { if (a.sid === p.id) { var v = Math.max(0, a.sc / a.max * 100); if (best === null || v > best) best = v; } });
+  return { best: best, tried: best !== null };
+}
+function mockPick(qs) {
+  var g = {}, out = [], any = true; qs.forEach(function (q) { (g[q.s] = g[q.s] || []).push(q); });
+  Object.keys(g).forEach(function (k) { g[k] = shuf(g[k]); });
+  while (out.length < R.mockQuestions && any) { any = false; Object.keys(g).forEach(function (k) { if (g[k].length && out.length < R.mockQuestions) { out.push(g[k].pop()); any = true; } }); }
+  return out.sort(function (a, b) { return ti(a.s) - ti(b.s); });
+}
+function show(keep) { if (S.view === 'subject') subject(S.subj, keep); else if (S.view === 'mix') mix(keep); else home(keep); }
+function nav(v) { document.querySelectorAll('#nav button').forEach(function (b) { b.classList.toggle('on', b.dataset.v === v); }); }
+
+/* ---------- shared pieces ---------- */
+function kindSeg() {
+  var q = S.kind === 'quiz';
+  return '<div class="seg"><button class="' + (!q ? 'on' : '') + '" data-act="kind" data-v="test"><b>Exam test</b><small>Timed, with negative marks</small></button>' +
+    '<button class="' + (q ? 'on' : '') + '" data-act="kind" data-v="quiz"><b>Instant quiz</b><small>Answer shown after each question</small></button></div>';
+}
+function negRow() { return '<div class="line"><span>Negative marking<small>−' + R.negative + ' for each wrong answer</small></span>' + sw(S.neg, 'neg') + '</div>'; }
+function bubbles(t) {
+  var max = 14, h = t.list.slice(0, max).map(function (p) {
+    var s = setStat(p); return '<i class="bb' + (s.tried ? ' f' : '') + '"' + (s.tried ? ' style="background:' + tone(s.best) + ';border-color:' + tone(s.best) + '"' : '') + '></i>';
+  }).join('');
+  return h + (t.list.length > max ? '<small class="mu">+' + (t.list.length - max) + '</small>' : '');
+}
+
+/* ---------- home: subject library ---------- */
+function home(keep) {
+  S.view = 'home'; clearInterval(S.t); relWake(); fabs(false); closeGrid(); closeTools();
+  var g = agg(), rows = R.topics.map(function (t) {
+    var a = g[t.n], p = a && a.t ? pct(a.c, a.t) : null, done = t.list.filter(function (x) { return setStat(x).tried; }).length;
+    return '<button class="srow" style="--h:' + t.hue + '" data-act="open" data-v="' + t.slug + '"><span class="ic">' + t.i + '</span>' +
+      '<span class="sn"><b>' + esc(t.n) + '</b><small>' + t.list.length + ' set' + (t.list.length > 1 ? 's' : '') + ' · ' + done + ' done</small></span>' +
+      '<em class="ac"' + (p === null ? '' : ' style="color:' + tone(p) + '"') + '>' + (p === null ? '–' : p + '%') + '</em><span class="bbs">' + bubbles(t) + '</span></button>';
+  }).join('');
+  render('<section class="hero"><h1>Pick a subject.<br>Fill the bubbles.</h1><p class="mu">Every subject has its own sets of WBCS Prelims questions. Finish a set and its bubble fills in, green for strong, amber for average, red for weak.</p></section>' +
+    homeCards() + kindSeg() +
+    '<div class="mock"><span><b>Full mock exam</b><small>' + R.mockQuestions + ' questions from every subject · ' + R.fullMinutes + ' min · full-screen</small></span><button class="btn s" data-act="mock">Start mock</button></div>' +
+    '<h2>Subjects</h2>' + rows +
+    '<button class="mixcta" data-act="tomix"><b>Build a custom mix</b><small>Combine several subjects into one practice run</small></button>' + quoteCard() +
+    (demo ? '<p class="note">Demo mode: <b>data/manifest.js</b> was not found, so a built-in sample is shown. Keep index.html next to the data folder to use your own sets.</p>' : ''), keep);
+  nav('lib');
+}
+
+/* ---------- subject page: its sets ---------- */
+function subject(slug, keep) {
+  var t = R.topics.filter(function (x) { return x.slug === slug; })[0]; if (!t) return home();
+  S.view = 'subject'; S.subj = slug; clearInterval(S.t); relWake(); fabs(false); closeGrid(); closeTools();
+  if (!t.list.every(function (p) { return setQs(p) || FAILED[p.id]; })) loadMany(t.list).then(function () { if (S.view === 'subject' && S.subj === slug) subject(slug, true); });
+  var total = 0, loaded = 0, g = agg()[t.n], ap = g && g.t ? pct(g.c, g.t) : null;
+  var items = t.list.map(function (p) {
+    var q = setQs(p), s = setStat(p);
+    if (FAILED[p.id]) return '<div class="set off"><span class="no">' + p.n + '</span><span class="si"><b>' + esc(p.title) + '</b><small>Coming soon</small></span></div>';
+    if (q) { total += q.length; loaded++; }
+    return '<button class="set" data-act="runset" data-v="' + esc(p.id) + '"' + (q ? '' : ' disabled') + '><span class="no' + (s.tried ? ' f' : '') + '"' + (s.tried ? ' style="background:' + tone(s.best) + ';border-color:' + tone(s.best) + '"' : '') + '>' + p.n + '</span>' +
+      '<span class="si"><b>' + esc(p.title) + '</b><small>' + (q ? q.length + ' questions · ' + (S.kind === 'quiz' ? 'no timer' : setMins(q.length) + ' min') + (s.tried ? ' · best ' + Math.round(s.best) + '%' : '') : 'Loading…') + '</small></span>' +
+      (q ? '<span class="go">' + (s.tried ? 'Retry' : 'Start') + '</span>' : '') + '</button>';
+  }).join('');
+  render('<button class="btn g s" data-act="home">← All subjects</button>' +
+    '<div class="shd" style="--h:' + t.hue + '"><span class="sic">' + t.i + '</span><div><h1 class="ph">' + esc(t.n) + '</h1><p class="mu">' + t.list.length + ' set' + (t.list.length > 1 ? 's' : '') + (total ? ' · ' + total + ' questions' : '') + (ap === null ? '' : ' · your accuracy <b style="color:' + tone(ap) + '">' + ap + '%</b>') + '</p></div></div>' +
+    kindSeg() + '<div class="card" style="margin-top:12px;padding-top:6px;padding-bottom:6px">' + negRow() + '</div>' + '<h2>Sets</h2>' + items +
+    (loaded > 1 ? '<button class="btn g" data-act="subjall" style="width:100%;margin-top:6px">Mix all ' + loaded + ' sets · ' + total + ' questions</button>' : ''), keep);
+  nav('lib');
+}
+
+/* ---------- custom mix across subjects ---------- */
+function mix(keep) {
+  S.view = 'mix'; S.mode = 'mix'; clearInterval(S.t); relWake(); fabs(false); closeGrid(); closeTools();
+  var all = allSets(); LOADED = all.every(function (p) { return setQs(p) || FAILED[p.id]; });
+  if (!LOADED) loadMany(all).then(function () { if (S.view === 'mix') mix(true); });
+  var q = S.kind === 'quiz', un = S.pool === 'unseen', c = cmap(un), g = agg(), sel = TOPICS.filter(function (t) { return S.secs[t]; });
+  var avail = sel.reduce(function (n, t) { return n + c[t]; }, 0), nStart = Math.min(S.cnt || 1e9, avail);
+  var chips = TOPICS.map(function (t) {
+    var gp = g[t] && g[t].t ? pct(g[t].c, g[t].t) : null;
+    return '<button class="chip ' + (S.secs[t] ? 'on' : '') + '" ' + (LOADED && !c[t] && !S.secs[t] ? 'disabled' : '') + ' data-act="sec" data-v="' + esc(t) + '">' + ICON[t] + ' ' + esc(t) + ' <span class="cn">' + (LOADED ? c[t] : '…') + '</span>' + (gp === null ? '' : '<i class="mdot" style="background:' + tone(gp) + '"></i>') + '</button>';
+  }).join('');
+  render('<button class="btn g s" data-act="home">← All subjects</button><h1 class="ph" style="margin-top:14px">Custom mix</h1><p class="mu">Pick subjects and draw random questions from all of their sets.</p>' + kindSeg() +
+    '<div class="card" style="margin-top:12px"><div class="line" style="padding-top:0"><b>Subjects</b><span class="row"><button class="btn g s" data-act="topall">All</button><button class="btn g s" data-act="topweak">Weakest 3</button><button class="btn g s" data-act="topnone">None</button></span></div>' +
+    '<p class="mu"><b style="color:var(--tx)">' + sel.length + '</b> of ' + TOPICS.length + ' selected · <b style="color:var(--tx)">' + (LOADED ? avail : '…') + '</b> questions available</p><div class="tgrid">' + chips + '</div>' +
+    '<p class="mu" style="margin-top:8px"><i class="mdot" style="background:#10b981"></i> strong <i class="mdot" style="background:#f59e0b"></i> average <i class="mdot" style="background:#ef4444"></i> weak, from your past tests</p>' +
+    '<div class="line"><span>Question pool</span><span class="row"><button class="chip ' + (!un ? 'on' : '') + '" style="padding:6px 12px" data-act="pool" data-v="all">All</button><button class="chip ' + (un ? 'on' : '') + '" style="padding:6px 12px" data-act="pool" data-v="unseen">Unseen only</button></span></div>' +
+    '<div class="line"><span>Number of questions</span><span class="row">' + [10, 20, 30, 0].map(function (n) { return '<button class="chip ' + (S.cnt === n ? 'on' : '') + '" style="padding:6px 12px" data-act="cnt" data-v="' + n + '">' + (n || 'All') + '</button>'; }).join('') + '</span></div>' +
+    negRow() + (q ? '' : '<div class="line"><span>Time (minutes)</span><input type="number" id="mins" min="1" max="180" value="' + S.mins + '"></div>') + '</div>' +
+    '<button class="btn" data-act="start" style="width:100%;padding:16px">' + (q ? 'Start quiz' : 'Start test') + (LOADED && nStart ? ' · ' + nStart + ' questions' : '') + '</button>', keep);
+  nav('mix');
+}
 document.addEventListener('input', function (e) {
   if (e.target.id === 'mins') S.mins = +e.target.value || 1;
   if (e.target.id === 'dm') { SET.defMins = Math.max(1, Math.min(180, +e.target.value || 30)); S.mins = SET.defMins; saveSet(); }
 });
 
-/* ---------- start a test ---------- */
+/* ---------- start a test: single set, subject mix, or full mock ---------- */
 async function start(opt) {
   if (S.view === 'test') return;
-  var one = S.mode === 'set', secs = TOPICS.filter(function (t) { return S.secs[t]; }), list;
-  if (one) { var cs = SETBY[S.setId]; if (!cs) return alert('Choose a chapter and a set first.'); list = [cs]; }
-  else {
-    if (!secs.length) return alert('Select at least one chapter.');
-    list = SETS.filter(function (s) { return S.secs[s.topic] && !s.bad && s.n !== 0; });
-    if (!list.length) return alert('No sets are available for the chosen chapters yet.');
-  }
+  var mode = S.mode, kind = S.kind, secs = TOPICS.filter(function (t) { return S.secs[t]; }), cnt = (opt && opt.cnt != null) ? opt.cnt : S.cnt, list = [];
+  if (mode === 'set') list = [SETBY[S.setId]];
+  else if (mode === 'mix') { if (!secs.length) return alert('Select at least one subject.'); R.topics.forEach(function (t) { if (secs.indexOf(t.n) > -1) list = list.concat(t.list); }); }
+  else list = allSets();
   if (get('wb_run', null) && !confirm('You have an unfinished test. Discard it and start a new one?')) return;
-  reqFS(S.kind, S.mode);   /* must run inside the click gesture, before any await */
-  var res = await Promise.all(list.map(function (s) { return load(s).then(function (d) { return { s: s, d: d }; }, function () { return null; }); }));
-  res = res.filter(Boolean);
-  if (!res.length || (one && res.length < 1)) { exitFS(); return alert('Could not load the set file. Check the paths in data/manifest.js.'); }
-  var qs = [], cnt = (opt && opt.cnt != null) ? opt.cnt : S.cnt;
-  res.forEach(function (x) {
-    x.d.questions.forEach(function (q, i) {
-      qs.push(Object.assign({}, q, { s: x.s.topic, _k: x.s.id + '#' + i, _src: R.examName + ' · ' + x.s.topic + ' · ' + x.s.name }));
-    });
-  });
-  if (!one && S.pool === 'unseen') qs = qs.filter(function (q) { return !SEEN[q._k]; });
-  if (!qs.length) { exitFS(); return alert(!one && S.pool === 'unseen' ? 'You have already seen every question in this selection. Switch the pool to "All".' : 'No questions found for this selection.'); }
+  reqFS(kind, mode);   /* must run inside the click gesture, before any await */
+  await loadMany(list);
+  list = list.filter(setQs);
+  if (!list.length) { exitFS(); return alert('No question files were found for this selection. Check the file names in data/manifest.js.'); }
+  var qs = []; list.forEach(function (p) { setQs(p).forEach(function (q, i) { qs.push(mkq(p, q, i)); }); });
+  if (mode === 'mix' && S.pool === 'unseen') qs = qs.filter(function (q) { return !SEEN[q._k]; });
+  if (!qs.length) { exitFS(); return alert('You have already seen every question in this selection. Switch the pool to "All".'); }
   var total;
-  if (one) { S.src = R.examName + ' · ' + res[0].s.topic + ' · ' + res[0].s.name; total = S.kind === 'quiz' ? 0 : Math.max(1, Math.ceil(qs.length * MPQ)) * 60; }
-  else {
+  if (mode === 'set') { S.src = list[0].subj + ' · ' + list[0].title; total = kind === 'quiz' ? 0 : Math.round(qs.length * R.secPerQ); }
+  else if (mode === 'mix') {
     if (cnt > 0 && qs.length > cnt) qs = shuf(qs).slice(0, cnt);
     qs.sort(function (a, b) { return ti(a.s) - ti(b.s); });
-    S.src = R.examName + ' · Chapter practice'; total = S.kind === 'quiz' ? 0 : Math.max(1, S.mins) * 60;
-  }
+    S.src = R.examName + ' · Custom mix'; total = kind === 'quiz' ? 0 : Math.max(1, S.mins) * 60;
+  } else { qs = mockPick(qs); S.src = R.examName + ' · Full mock'; total = R.fullMinutes * 60; }
   begin(qs, total);
 }
 function begin(qs, total, kind) {
@@ -326,7 +331,6 @@ function tick() {
 /* ---------- question screens ---------- */
 function tchips(q) {
   var secs = []; S.qs.forEach(function (x) { if (secs.indexOf(x.s) < 0) secs.push(x.s); });
-  if (secs.length < 2) return '';
   return '<div class="chips sm tscroll">' + secs.map(function (s) {
     return '<button class="chip ' + (s === q.s ? 'on' : '') + '" data-act="secjump" data-v="' + esc(s) + '">' + (ICON[s] || '') + ' ' + esc(s) + '</button>';
   }).join('') + '</div>';
@@ -377,7 +381,7 @@ function closeGrid() { S.grid = false; $('#drawer').classList.remove('show'); $(
 function submit() {
   clearInterval(S.t); relWake(); fabs(false); closeGrid(); closeTools(); exitFS(); clearRun();
   S.paused = false; $('#pause').classList.remove('show'); $('#warn').classList.remove('show'); S.view = 'result';
-  var neg = (S.run === 'test' && S.mode === 'set') ? R.negative : (S.tneg ? R.negative : 0);
+  var neg = (S.run === 'test' && S.mode === 'full') ? R.negative : (S.tneg ? R.negative : 0);
   var st = {}, det = [], full = [], conf = {}, sc = 0, att = 0, mastered = 0, tomorrow = today0() + DAY;
   S.qs.forEach(function (q, i) {
     var r = S.ans[i] === null ? 'n' : S.ans[i] === q.a ? 'c' : 'w', f = S.fl[i] || 'u';
@@ -395,7 +399,7 @@ function submit() {
   });
   persist(); put('wb_seen', SEEN);
   var dk = dkey(), dd = DAYM[dk] || (DAYM[dk] = { q: 0, t: 0 }); dd.q += att; dd.t++; put('wb_days', DAYM);
-  ATT.push({ ts: Date.now(), src: S.mode === 'saved' ? 'Revision practice' : S.src + (S.run === 'quiz' ? ' · Quiz' : ''), mode: S.mode, run: S.run, sid: S.mode === 'set' ? S.setId : null, sc: sc, max: S.qs.length, neg: neg, used: S.el, total: S.total, secs: st, det: det, conf: conf, fsx: S.fsx, tabx: S.tabx, full: full });
+  ATT.push({ ts: Date.now(), sid: S.mode === 'set' ? S.setId : null, src: S.mode === 'saved' ? 'Revision practice' : S.src + (S.run === 'quiz' ? ' · Quiz' : ''), mode: S.mode, run: S.run, sc: sc, max: S.qs.length, neg: neg, used: S.el, total: S.total, secs: st, det: det, conf: conf, fsx: S.fsx, tabx: S.tabx, full: full });
   if (ATT.length > 40) ATT.shift();
   ATT.forEach(function (a, i) { if (i < ATT.length - 5) delete a.full; });   /* keep full question detail for the last 5 attempts only */
   put('wb_att', ATT);
@@ -571,7 +575,7 @@ function tAll() {
     '<div class="mu" style="margin-top:6px">Total practice time: ' + Math.round(t / 60) + ' min</div>';
 }
 function tTopics() {
-  if (!ATT.length) return empty('📚', 'No topic data', 'Take a test and all ' + TOPICS.length + ' chapters will be ranked here, weakest first.');
+  if (!ATT.length) return empty('📚', 'No topic data', 'Take a test and all 18 topics will be ranked here, weakest first.');
   var g = agg(), done = weakFirst(g), un = TOPICS.filter(function (k) { return !g[k]; });
   return '<div class="card">' + bars(g) + '</div><p class="mu" style="margin-bottom:10px">Weakest topics first — tap Practise to drill one.</p>' + done.map(function (k) { return trow(k, g[k], true); }).join('') +
     (un.length ? '<div class="sec">Not attempted yet (' + un.length + ')</div><div class="tgrid">' + un.map(function (k) { return '<button class="chip" data-act="ptopic" data-v="' + esc(k) + '">' + ICON[k] + ' ' + esc(k) + '</button>'; }).join('') + '</div>' : '');
@@ -600,7 +604,7 @@ function tSet() {
     setRow('Motion graphics', 'Turn off to save battery', sw(SET.motion, 'tg', 'motion')) + '</div>' +
     '<div class="sec">Test experience</div><div class="card">' +
     setRow('Rough pad &amp; calculator', 'Buttons shown during tests', sw(SET.tools, 'tg', 'tools')) +
-    setRow('Full-screen exam mode', 'Single-set exam tests only', sw(SET.fullscreen, 'tg', 'fullscreen')) +
+    setRow('Full-screen exam mode', 'Full-paper exam tests only', sw(SET.fullscreen, 'tg', 'fullscreen')) +
     setRow('Show timer', 'Hide it to reduce pressure', sw(SET.showTimer, 'tg', 'showTimer')) +
     setRow('Auto-next on answer', 'Jump ahead after choosing', sw(SET.autoNext, 'tg', 'autoNext')) +
     setRow('Shuffle questions', 'Within each topic', sw(SET.shuffleQ, 'tg', 'shuffleQ')) +
@@ -609,8 +613,8 @@ function tSet() {
     setRow('Auto-save wrong answers', 'Builds your revision notebook', sw(SET.autoWrong, 'tg', 'autoWrong')) +
     setRow('Haptic feedback', 'Light vibration on taps', sw(SET.haptic, 'tg', 'haptic')) +
     setRow('Keep screen awake', 'During tests', sw(SET.wake, 'tg', 'wake')) +
-    setRow('Default multi-chapter test time', 'Minutes', '<input type="number" id="dm" min="1" max="180" value="' + SET.defMins + '">') +
-    setRow('Negative marking by default', 'For multi-chapter tests', sw(SET.defNeg, 'tg', 'defNeg')) + '</div>' +
+    setRow('Default topic-test time', 'Minutes', '<input type="number" id="dm" min="1" max="180" value="' + SET.defMins + '">') +
+    setRow('Negative marking by default', 'For chapter-wise tests', sw(SET.defNeg, 'tg', 'defNeg')) + '</div>' +
     '<div class="sec">Help</div><div class="card"><button class="btn g s" data-act="tour">▶ Replay the app tour</button></div>' +
     '<div class="sec">Data</div><div class="card"><p class="mu" style="margin-bottom:10px">Stored on this device: ' + ATT.length + ' tests · ' + Object.keys(SAV).length + ' saved questions · ' + kb + ' KB</p>' +
     '<div class="row"><button class="btn g s" data-act="export">⬇ Backup</button><button class="btn g s" data-act="import">⬆ Restore</button><button class="btn g s" data-act="wipe" style="color:#ef4444">🗑 Clear data</button></div></div>' +
@@ -701,8 +705,8 @@ function toolTab(t) {
 
 /* ---------- onboarding tour ---------- */
 var TOUR = [
-  { i: '👋', t: 'Welcome to WBCS PYQs Series', d: 'Practise WBCS Prelims previous-year questions chapter by chapter, in exam-style tests or instant-feedback quizzes.' },
-  { i: '📝', t: 'Two ways to practise', d: '<b>Exam Test</b> is timed with negative marking. <b>Quiz</b> shows the answer and explanation right away. Pick <b>One chapter set</b> to attempt a single set of a chapter, or <b>Multi-chapter practice</b> to mix questions from several chapters.' },
+  { i: '👋', t: 'Welcome to WBCS PYQs Series', d: 'Open any of the 18 subjects, pick a set, and practise WBCS Prelims questions in an exam-style test or an instant-feedback quiz.' },
+  { i: '📝', t: 'Two ways to practise', d: '<b>Exam Test</b> is timed with negative marking (and full-screen mode for full papers). <b>Quiz</b> shows the answer and explanation right away. Take one <b>set</b>, build a <b>custom mix</b> across subjects, or try the <b>full mock</b> exam.' },
   { i: '🧰', t: 'Tools during a test', d: '✏️ <b>Rough pad</b> and 🧮 <b>calculator</b> are one tap away. Use ⏸ <b>Pause</b> any time — your test is saved even if you refresh. Mark your <b>confidence</b> (Sure / Guess / Confused) on each question.' },
   { i: '📊', t: 'Know your strengths', d: 'Open ⚙️ for a <b>radar chart</b>, accuracy bars by topic, time-per-question insights, your <b>daily practice calendar</b>, and export your attempted questions with your answers.' },
   { i: '🔁', t: 'Revise smartly', d: 'Wrong answers go to a <b>spaced-repetition notebook</b> (back after 1, 3, 7, 14 days). The <b>weak-area coach</b> on the home screen picks the topic that needs you most.' }
@@ -725,25 +729,29 @@ $('#imp').addEventListener('change', function (e) {
   };
   r.readAsText(f); e.target.value = '';
 });
-function setTopicOnly(v) { TOPICS.forEach(function (t) { S.secs[t] = (t === v); }); S.mode = 'multi'; S.kind = 'quiz'; S.pool = 'all'; }
+function onlySubj(v) { TOPICS.forEach(function (t) { S.secs[t] = (t === v); }); S.mode = 'mix'; S.pool = 'all'; }
+function setTopicOnly(v) { onlySubj(v); S.kind = 'quiz'; }
 var A = {
   theme: function () { root.dataset.theme = root.dataset.theme === 'dark' ? 'light' : 'dark'; put('wb_t', root.dataset.theme); if (sheetOpen()) sheet(); if (toolsOpen() && S.ttab === 'pad') padDraw(); },
   pick: function (v) { root.dataset.pal = v; put('wb_p', v); if (sheetOpen()) sheet(); },
-  mode: function (v) { S.mode = v; home(true); },
-  kind: function (v) { S.kind = v; home(true); },
-  topic: function (v) { S.topic = v; var f = firstSet(v); S.setId = f ? f.id : ''; home(true); },
-  pset: function (v) { S.setId = v; home(true); },
-  sec: function (v) { S.secs[v] = !S.secs[v]; home(true); },
-  cnt: function (v) { S.cnt = +v; home(true); },
-  topall: function () { var c = counts(S.pool === 'unseen'); TOPICS.forEach(function (t) { S.secs[t] = !LOADED || c[t] > 0; }); home(true); },
+  kind: function (v) { S.kind = v; show(true); },
+  sec: function (v) { S.secs[v] = !S.secs[v]; mix(true); },
+  cnt: function (v) { S.cnt = +v; mix(true); },
+  topall: function () { var c = cmap(S.pool === 'unseen'); TOPICS.forEach(function (t) { S.secs[t] = !LOADED || c[t] > 0; }); mix(true); },
   topweak: function () {
-    var g = agg(), c = counts(S.pool === 'unseen'), ks = weakFirst(g).filter(function (k) { return c[k] > 0; }).slice(0, 3);
-    if (!ks.length) return toast('Take a test first — then I can find your weakest subjects.');
-    TOPICS.forEach(function (t) { S.secs[t] = ks.indexOf(t) > -1; }); home(true);
+    var g = agg(), c = cmap(S.pool === 'unseen'), ks = weakFirst(g).filter(function (k) { return c[k] > 0; }).slice(0, 3);
+    if (!ks.length) return toast('Take a test first, then I can find your weakest subjects.');
+    TOPICS.forEach(function (t) { S.secs[t] = ks.indexOf(t) > -1; }); mix(true);
   },
-  pool: function (v) { S.pool = v; home(true); },
-  topnone: function () { TOPICS.forEach(function (t) { S.secs[t] = false; }); home(true); },
-  neg: function () { S.neg = !S.neg; home(true); },
+  pool: function (v) { S.pool = v; mix(true); },
+  topnone: function () { TOPICS.forEach(function (t) { S.secs[t] = false; }); mix(true); },
+  neg: function () { S.neg = !S.neg; show(true); },
+  open: function (v) { subject(v); },
+  runset: function (v) { S.mode = 'set'; S.setId = v; start(); },
+  subjall: function () { onlySubj(BYN[R.topics.filter(function (t) { return t.slug === S.subj; })[0].n].n); start({ cnt: 0 }); },
+  mock: function () { S.kind = 'test'; S.mode = 'full'; S.neg = true; start(); },
+  tolib: function () { if (S.view !== 'test') home(); }, tomix: function () { if (S.view !== 'test') mix(); },
+  tostat: function () { openSheet('all'); }, torev: function () { openSheet('sav'); }, toset: function () { openSheet('set'); },
   start: function () { start(); }, home: function () { home(); },
   resume: resume,
   discard: function () { if (confirm('Discard your unfinished test?')) { clearRun(); home(true); } },
@@ -791,10 +799,10 @@ var A = {
     closeSheet(); S.mode = 'saved';
     begin(l.map(function (e) { return { s: e.s, c: e.c, q: e.q, o: e.o.slice(), a: e.a, e: e.e, _k: e.k, _src: e.src }; }), 0, 'quiz');
   },
-  ptopic: function (v) { if (S.view === 'test') return alert('Finish or exit the current test first.'); closeSheet(); setTopicOnly(v); home(); },
+  ptopic: function (v) { if (S.view === 'test') return alert('Finish or exit the current test first.'); closeSheet(); subject(BYN[v].slug); },
   exportq: exportQ,
   tour: function () { closeSheet(); tourShow(0); }, tournext: function () { tourShow(S.tourN + 1); }, tourback: function () { tourShow(S.tourN - 1); }, tourend: tourEnd,
-  tg: function (v) { SET[v] = !SET[v]; if (v === 'defNeg') S.neg = SET.defNeg; saveSet(); if (sheetOpen()) sheet(); if (S.view === 'home') home(true); },
+  tg: function (v) { SET[v] = !SET[v]; if (v === 'defNeg') S.neg = SET.defNeg; saveSet(); if (sheetOpen()) sheet(); if (S.view === 'home' || S.view === 'subject' || S.view === 'mix') show(true); },
   font: function (v) { SET.font = +v; saveSet(); sheet(); },
   'export': function () { download('wbcs-backup.json', JSON.stringify({ att: ATT, sav: SAV, set: SET, days: DAYM, seen: SEEN })); },
   'import': function () { $('#imp').click(); },
@@ -823,7 +831,7 @@ document.addEventListener('keydown', function (e) {
   else if (k2 === 'm' && S.run !== 'quiz') A.mark();
 });
 
-fixSel(); padInit(); calcInit();
-home(); preload();
+padInit(); calcInit();
+home();
 if (!get('wb_tour', 0)) tourShow(0);
 })();

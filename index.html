@@ -4,12 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>WBCS Prelims PYQs Series</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@700;800&family=Hanken+Grotesk:wght@400;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 <link rel="icon" type="image/png" href="favicon.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 </head>
 <body>
-<div class="bg"><i></i><i></i><i></i><i></i></div>
 <header><span class="brand"><img class="mk" src="logo.png" alt="Wise Choice logo" width="44" height="44"><span><b>Wise Choice</b><small>Your Shortcut through the Syllabus!</small></span></span><button class="sw" id="tgl" data-act="theme" aria-label="Dark / light mode"><i></i></button></header>
 <main id="app"></main>
 
@@ -49,6 +50,8 @@
   </div>
 </div>
 
+<nav id="nav" aria-label="Main"><button data-act="tolib" data-v="lib"><i>📚</i>Library</button><button data-act="tomix" data-v="mix"><i>🎛️</i>Custom mix</button><button data-act="tostat"><i>📊</i>Insights</button><button data-act="torev"><i>🔖</i>Revise</button><button data-act="toset"><i>⚙️</i>Settings</button></nav>
+
 <input type="file" id="imp" accept=".json,application/json" style="display:none">
 <div class="fabs">
   <button class="fab s" id="bExit" data-act="exit" style="display:none" aria-label="Exit test">✕</button>
@@ -72,9 +75,9 @@
 <div class="ov dim" id="tour"></div>
 <canvas id="cf"></canvas><div id="toast"></div>
 
-<!-- 1) exam rules + topic list + quotes + list of year files -->
+<!-- 1) exam rules + the 18 subjects + set counts + quotes -->
 <script src="data/manifest.js"></script>
-<!-- 2) app logic (year papers are loaded on demand from the paths in manifest.js) -->
+<!-- 2) app logic (each subject's set files are loaded on demand: data/<subject>/set-N.js) -->
 <script src="app.js"></script>
 </body>
 </html>
