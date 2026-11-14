@@ -3,31 +3,81 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>WBCS Prelims Mock Test Series</title>
+<title>Wise Choice Chapter-wise Question Bank &amp; Test Portal</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <div class="bg"><i></i><i></i><i></i><i></i></div>
-<header><span class="logo">⚡ WBCS Prelims Mock Series</span><button class="sw" id="tgl" data-act="theme" aria-label="Dark / light mode"><i></i></button></header>
+<header>
+  <span class="brand">
+    <div class="mk">WC</div>
+    <span><b>Wise Choice</b><small>Chapter-wise Question Bank</small></span>
+  </span>
+  <button class="sw" id="tgl" data-act="theme" aria-label="Dark / light mode"><i></i></button>
+</header>
 <main id="app"></main>
+
+<!-- question palette drawer -->
 <div class="shade" id="shade" data-act="closegrid"></div>
 <div id="drawer"></div>
+
+<!-- settings & analytics sheet -->
 <div class="shade" id="shade2" data-act="closesheet"></div>
 <div id="sheet" aria-label="Settings and analytics">
   <div class="shead"><b style="font-size:1.1rem">⚙️ Settings &amp; Analytics</b><button class="btn g s" data-act="closesheet">✕ Close</button></div>
   <div class="tabs" id="stabs"></div>
   <div id="sbody"></div>
 </div>
+
+<!-- rough pad + calculator -->
+<div id="tools" aria-label="Rough work pad and calculator">
+  <div class="thead">
+    <div class="row"><button class="chip on" id="tabPad" data-act="ttab" data-v="pad">✏️ Rough pad</button><button class="chip" id="tabCalc" data-act="ttab" data-v="calc">🧮 Calculator</button></div>
+    <button class="btn g s" data-act="toolsclose">✕ Close</button>
+  </div>
+  <div id="padWrap">
+    <div class="ptools">
+      <button class="dot on" data-pc="auto" data-act="padcol" data-v="auto" style="background:var(--tx)" aria-label="Default ink"></button>
+      <button class="dot" data-pc="#ef4444" data-act="padcol" data-v="#ef4444" style="background:#ef4444" aria-label="Red"></button>
+      <button class="dot" data-pc="#3b82f6" data-act="padcol" data-v="#3b82f6" style="background:#3b82f6" aria-label="Blue"></button>
+      <button class="dot" data-pc="#10b981" data-act="padcol" data-v="#10b981" style="background:#10b981" aria-label="Green"></button>
+      <button class="chip" id="bErase" data-act="paderase">🧽 Eraser</button>
+      <button class="chip" data-act="padundo">↩ Undo</button>
+      <button class="chip" data-act="padclear">Clear</button>
+    </div>
+    <canvas id="pad"></canvas>
+  </div>
+  <div id="calcWrap" style="display:none">
+    <div class="cdisp"><small id="cexp"></small><b id="cval">0</b></div>
+    <div class="ckeys" id="ckeys"></div>
+  </div>
+</div>
+
 <input type="file" id="imp" accept=".json,application/json" style="display:none">
 <div class="fabs">
   <button class="fab s" id="bExit" data-act="exit" style="display:none" aria-label="Exit test">✕</button>
   <button class="fab s" id="bGrid" data-act="grid" style="display:none" aria-label="Question list">▦</button>
+  <button class="fab s" id="bPad" data-act="tools" data-v="pad" style="display:none" aria-label="Rough pad">✏️</button>
+  <button class="fab s" id="bCalc" data-act="tools" data-v="calc" style="display:none" aria-label="Calculator">🧮</button>
   <button class="fab main" data-act="sheet" aria-label="Settings and analytics">⚙️</button>
 </div>
 
-<!-- 1) exam rules + topic list + list of year files -->
-<script src="data/manifest.js"></script>
-<!-- 2) app logic (year papers are loaded on demand from the paths in manifest.js) -->
+<!-- overlays -->
+<div class="ov" id="pause"><div class="ovc">
+  <div class="big">⏸</div><h2 style="margin-top:6px">Test paused</h2>
+  <p class="mu" style="margin:6px 0 16px">Timer stopped · <b id="pLeft"></b> left.</p>
+  <div class="row" style="justify-content:center"><button class="btn" data-act="unpause">▶ Resume</button><button class="btn g" data-act="pauseexit">Save &amp; exit</button></div>
+</div></div>
+<div class="ov dim" id="warn"><div class="ovc">
+  <div class="big">⚠️</div><h2 style="margin-top:6px">You left full-screen</h2>
+  <p class="mu" style="margin:6px 0 16px">Your timer is still running.</p>
+  <div class="row" style="justify-content:center"><button class="btn" data-act="fsback">Return</button><button class="btn g" data-act="fsskip">Continue</button></div>
+</div></div>
+<canvas id="cf"></canvas><div id="toast"></div>
+
+<!-- 1) Manifest with chapter list & rules -->
+<script src="manifest.js"></script>
+<!-- 2) App logic -->
 <script src="app.js"></script>
 </body>
 </html>
