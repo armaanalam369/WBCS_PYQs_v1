@@ -1,72 +1,55 @@
 /* =====================================================================
-   WBCS Prelims Mock Test Series — manifest.js
-   Exam rules, the 18 topics, motivational quotes, and the list of
-   year-wise paper files.
+   WBCS Prelims PYQs Series — manifest.js  (chapter-wise sets)
+   Exam rules, the 18 chapters, and the list of SET files inside each chapter.
 
-   HOW TO ADD A NEW YEAR
-   1. Copy any data/20xx.js file to data/2024.js and replace the questions.
-   2. Add one line to PAPER_LIST below:  {year:2024, file:'data/2024.js'}
-   That's all — the year chip appears on the home screen automatically.
+   HOW TO ADD A NEW SET TO A CHAPTER
+   1. Copy any data/<set>.js file, e.g. to data/polity-3.js, and replace the questions.
+      Inside the file, the id in  SETDATA['POL-3']  must match the id below.
+   2. Add ONE line to that chapter's  sets: [ ... ]  list below:
+        { id:'POL-3', name:'Set 3', file:'data/polity-3.js' }
+   That's all — the set appears under that chapter on the home screen automatically.
+
+   OPTIONAL  n:<number of questions>  (e.g. n:25)
+   If you add n, the app can show counts instantly WITHOUT downloading the file first.
+   Recommended once you have many sets (otherwise every set file is fetched in the
+   background when the app opens, only to count its questions).
    ===================================================================== */
 
-/* ---- Exam rules (edit to match the official pattern you want to simulate) ---- */
 window.RULES = {
   examName: 'WBCS Prelims',
-  fullMinutes: 120,     // time for a full-paper test
-  negative: 0.25,       // marks deducted per wrong answer (1 mark per correct answer)
+  negative: 0.25,     // marks deducted per wrong answer (1 mark per correct answer)
+  minsPerQ: 1.2,      // exam minutes per question in a one-set test (120 min / 100 Q = 1.2)
 
-  /* The 18 topics. `n` must match the "s" field of every question EXACTLY.
-     `i` = icon, `k` = short code used on the radar chart. */
+  /* The 18 chapters. `n` = chapter name, `i` = icon, `k` = short label on the radar chart,
+     `sets` = list of set files for that chapter (empty list = chapter has no sets yet).
+     Set `id` must be UNIQUE across the whole manifest and must never change once students
+     have used it (progress, "unseen" tracking and saved questions are stored against it). */
   topics: [
-    { n: 'English',                    i: '🔤', k: 'English'  },
-    { n: 'Indian Polity',              i: '🏛️', k: 'Polity'  },
-    { n: 'Ancient History',            i: '🏺', k: 'Ancient History'  },
-    { n: 'Indian Economy',             i: '💹', k: 'Econony'  },
-    { n: 'Medieval History',           i: '🏰', k: 'Medieval History'  },
-    { n: 'Physics',                    i: '⚛️', k: 'Physics'  },
-    { n: 'Indian National Movement',   i: '🇮🇳', k: 'National Movement'  },
-    { n: 'Chemistry',                  i: '🧪', k: 'Chemistry'  },
-    { n: 'World & Physical Geography', i: '🌍', k: 'Physical Geography' },
-    { n: 'Biology',                    i: '🧬', k: 'Biology'  },
-    { n: 'Modern History',             i: '📜', k: 'Modern History'  },
-    { n: 'Arts & Culture',             i: '🎭', k: 'Arts & Culture'  },
-    { n: 'Indian Geography',           i: '🗺️', k: 'Indian Geography' },
-    { n: 'West Bengal Specific',       i: '🐅', k: 'W.B. Specific'   },
-    { n: 'Environmental Studies',      i: '🌱', k: 'Environmental Studies'  },
-    { n: 'Static GK',                  i: '📌', k: 'Static GK'   },
-    { n: 'General Mental Ability',     i: '🧠', k: 'General Mental Ability'  },
-    { n: 'Current Affairs',            i: '📰', k: 'Current Affairs'   }
+    { n: 'English', i: '🔤', k: 'English', sets: [
+        { id: 'ENG-1', name: 'Set 1', file: 'data/english-1.js' }
+    ] },
+    { n: 'Indian Polity', i: '🏛️', k: 'Polity', sets: [
+        { id: 'POL-1', name: 'Set 1', file: 'data/polity-1.js' },
+        { id: 'POL-2', name: 'Set 2', file: 'data/polity-2.js' }
+    ] },
+    { n: 'Ancient History',            i: '🏺', k: 'Ancient History',     sets: [] },
+    { n: 'Indian Economy',             i: '💹', k: 'Economy',             sets: [] },
+    { n: 'Medieval History',           i: '🏰', k: 'Medieval History',    sets: [] },
+    { n: 'Physics',                    i: '⚛️', k: 'Physics',             sets: [] },
+    { n: 'Indian National Movement',   i: '🇮🇳', k: 'National Movement',   sets: [] },
+    { n: 'Chemistry',                  i: '🧪', k: 'Chemistry',           sets: [] },
+    { n: 'World & Physical Geography', i: '🌍', k: 'Physical Geography',  sets: [] },
+    { n: 'Biology',                    i: '🧬', k: 'Biology',             sets: [] },
+    { n: 'Modern History',             i: '📜', k: 'Modern History',      sets: [] },
+    { n: 'Arts & Culture',             i: '🎭', k: 'Arts & Culture',      sets: [] },
+    { n: 'Indian Geography',           i: '🗺️', k: 'Indian Geography',    sets: [] },
+    { n: 'West Bengal Specific',       i: '🐅', k: 'W.B. Specific',       sets: [] },
+    { n: 'Environmental Studies',      i: '🌱', k: 'Environmental Studies', sets: [] },
+    { n: 'Static GK',                  i: '📌', k: 'Static GK',           sets: [] },
+    { n: 'General Mental Ability',     i: '🧠', k: 'General Mental Ability', sets: [] },
+    { n: 'Current Affairs',            i: '📰', k: 'Current Affairs',     sets: [] }
   ]
 };
-
-/* ---- Year-wise paper files (loaded only when the student picks that year) ---- */
-window.PAPER_LIST = [
-  { year: 2024, file: 'data/2024.js' },
-  { year: 2023, file: 'data/2023.js' },
-  { year: 2022, file: 'data/2022.js' },
-  { year: 2021, file: 'data/2021.js' },
-  { year: 2020, file: 'data/2020.js' },
-  { year: 2019, file: 'data/2019.js' },
-  { year: 2018, file: 'data/2018.js' },
-  { year: 2017, file: 'data/2017.js' },
-  { year: 2016, file: 'data/2016.js' },
-  { year: 2015, file: 'data/2015.js' },
-  { year: 2014, file: 'data/2014.js' },
-  { year: 2013, file: 'data/2013.js' },
-  { year: 2012, file: 'data/2012.js' },
-  { year: 2011, file: 'data/2011.js' },
-  { year: 2010, file: 'data/2010.js' },
-  { year: 2009, file: 'data/2009.js' },
-  { year: 2008, file: 'data/2008.js' },
-  { year: 2007, file: 'data/2007.js' },
-  { year: 2006, file: 'data/2006.js' },
-  { year: 2005, file: 'data/2005.js' },
-  { year: 2004, file: 'data/2004.js' },
-  { year: 2003, file: 'data/2003.js' },
-  { year: 2002, file: 'data/2002.js' },
-  { year: 2001, file: 'data/2001.js' },
-  { year: 2000, file: 'data/2000.js' }
-];
 
 /* ---- Motivational quotes (one is shown per day on the home screen). Add your own! ---- */
 window.QUOTES = [
